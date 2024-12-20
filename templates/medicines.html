@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block title %}Список лекарств{% endblock %}
+
+{% block styles %}
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background-color: #fcf4f4; /* Светло-розовый фон */
+    }
+    thead {
+        background-color: #e0b0b0; /* Мягкий розовый */
+        color: white;
+    }
+    th, td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #f0d0d0; /* Светло-розовый бордер */
+    }
+    tbody tr:nth-child(even) {
+        background-color: #f9e0e0; /* Светло-розовый для четных строк */
+    }
+    tbody tr:hover {
+        background-color: #f0c0c0; /* Темно-розовый при наведении */
+    }
+    form {
+        margin: 20px 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px; /* Добавим промежуток между элементами */
+    }
+    form input[type="text"], form select, form input[type="number"] {
+        width: 200px; /* Уменьшим ширину полей */
+        padding: 10px;
+        font-size: 16px;
+        border: 2px solid #f0d0d0; /* Светло-розовый бордер */
+        border-radius: 5px;
+        outline: none;
+        transition: border-color 0.3s ease;
+    }
+    form input[type="text"]:focus, form select:focus, form input[type="number"]:focus {
+        border-color: #d4a0a0; /* Розовый при фокусе */
+    }
+    form button {
+        margin-left: 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #e0b0b0; /* Мягкий розовый */
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    form button:hover {
+        background-color: #d4a0a0; /* Темно-розовый при наведении */
+    }
+    .showmore {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 1.2rem;
+        color: #d4a0a0; /* Розовый цвет текста */
+        text-decoration: none;
+        font-weight: bold;
+        display: block; /* Сделаем ссылку блочным элементом */
+    }
+    .showmore:hover {
+        text-decoration: underline;
+    }
+    .add-button {
+        display: inline-block;
+        margin: 20px 0;
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #e0b0b0; /* Мягкий розовый */
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+    }
+    .add-button:hover {
+        background-color: #d4a0a0; /* Темно-розовый при наведении */
+    }
+    .pagination {
+        display: flex;
+        justify-content: space-between; /* Размещает элементы по краям */
+        margin-top: 20px;
+    }
+    
+    .showmore.prev {
+        margin-right: auto; /* Сдвигает ссылку "Вернуться назад" влево */
+    }
+    
+    .showmore.next {
+        margin-left: auto; /* Сдвигает ссылку "Показать ещё" вправо */
+    }
+    
+    .showmore {
+        text-align: center;
+        font-size: 1.2rem;
+        color: #d4a0a0; /* Розовый цвет текста */
+        text-decoration: none;
+        font-weight: bold;
+        transition: color 0.3s ease;
+    }
+    
+    .showmore:hover {
+        text-decoration: underline;
+        color: #e0b0b0; /* Темно-розовый при наведении */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Список лекарств</h1>
+
+<!-- Кнопка для добавления лекарства (только для pharmacist) -->
+{% if session.username == 'pharmacist' %}
+<a href="/rest-api/add_medicine" class="add-button">Добавить лекарство</a>
+{% endif %}
+
+<form method="get" action="/rest-api/medicines">
+    <input type="text" name="search" placeholder="Название или непатентованное название" value="{{ search }}">
+    <select name="prescription_required">
+        <option value="all">Все</option>
+        <option value="true" {% if prescription_required == "true" %}selected{% endif %}>Только по рецепту</option>
+        <option value="false" {% if prescription_required == "false" %}selected{% endif %}>Без рецепта</option>
+    </select>
+    <input type="number" name="min_price" placeholder="Минимальная цена" value="{{ min_price }}">
+    <input type="number" name="max_price" placeholder="Максимальная цена" value="{{ max_price }}">
+    <button type="submit">Искать</button>
+</form>
+
+<table>
+    <thead>
+        <tr>
+            <th>Название</th>
+            <th>Непатентованное название</th>
+            <th>Рецепт</th>
+            <th>Цена</th>
+            <th>Количество</th>
+            {% if session.username == 'pharmacist' %}
+                <th>Действия</th>
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for medicine in medicines %}
+        <tr>
+            <td>{{ medicine.name }}</td>
+            <td>{{ medicine.generic_name }}</td>
+            <td>{{ "Да" if medicine.prescription_required else "Нет" }}</td>
+            <td>{{ medicine.price }}</td>
+            <td>{{ "Отсутствует" if medicine.quantity == 0 else medicine.quantity }}</td>
+            <td>
+                {% if session.username == 'pharmacist' %}
+                    <form method="GET" action="/rest-api/edit_medicine/{{ medicine.name }}" style="display:inline;">
+                        <button type="submit" class="btn btn-warning">Редактировать</button>
+                    </form>
+                    <form method="POST" action="/rest-api/delete_medicine/{{ medicine.name }}" style="display:inline;">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Вы уверены?')">Удалить</button>
+                    </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if page > 1 or next_page %}
+<div class="pagination">
+    {% if page > 1 %}
+        <a class="showmore prev" href="/rest-api/medicines?page={{ page - 1 }}&search={{ search }}&prescription_required={{ prescription_required }}&min_price={{ min_price }}&max_price={{ max_price }}">Вернуться назад</a>
+    {% endif %}
+
+    {% if next_page %}
+        <a class="showmore next" href="/rest-api/medicines?page={{ next_page }}&search={{ search }}&prescription_required={{ prescription_required }}&min_price={{ min_price }}&max_price={{ max_price }}">Показать ещё</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

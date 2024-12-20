@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Авторизация{% endblock %}
+
+{% block styles %}
+<style>
+    form {
+        width: 40%; /* Увеличим ширину формы */
+        max-width: 500px; /* Ограничим максимальную ширину */
+        margin: 20px auto; /* Добавим отступ сверху и снизу */
+        display: flex;
+        flex-direction: column;
+        padding: 30px; /* Увеличим внутренние отступы */
+        background-color: #fcf4f4; /* Светло-розовый фон */
+        border-radius: 15px; /* Скругленные углы */
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* Мягкая тень */
+    }
+
+    h1 {
+        text-align: center;
+        color: #d4a0a0; /* Розовый цвет заголовка */
+        margin-bottom: 20px; /* Отступ снизу */
+    }
+
+    label {
+        margin-bottom: 8px; /* Увеличим отступ */
+        color: #4a4a4a; /* Темно-серый цвет текста */
+        font-weight: bold;
+        font-size: 18px; /* Увеличим размер текста */
+    }
+
+    input, button {
+        margin-bottom: 20px; /* Увеличим отступ */
+        padding: 12px; /* Увеличим внутренние отступы */
+        font-size: 16px; /* Уменьшим размер текста для полей ввода */
+        border: 1px solid #dcdcdc; /* Светло-серый бордер */
+        border-radius: 8px; /* Скругленные углы */
+        background-color: #ffffff; /* Белый фон */
+        transition: border-color 0.3s ease; /* Плавное изменение цвета границы */
+    }
+
+    input:focus {
+        border-color: #d4a0a0; /* Розовый цвет при фокусе */
+        outline: none; /* Убираем стандартный outline */
+    }
+
+    button {
+        align-self: center; /* Выравниваем кнопку по центру */
+        background-color: #e0b0b0; /* Мягкий розовый */
+        color: #ffffff; /* Белый текст */
+        font-size: 18px; /* Увеличим размер текста */
+        padding: 12px 24px; /* Увеличим отступы */
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease; /* Плавное изменение цвета */
+    }
+
+    button:hover {
+        background-color: #d4a0a0; /* Темно-розовый при наведении */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Войти в систему</h1>
+<form action="/rest-api/login" method="POST">
+    <label for="username">Логин:</label>
+    <input type="text" id="username" name="username" required>
+    <label for="password">Пароль:</label>
+    <input type="password" id="password" name="password" required>
+    <button type="submit">Войти</button>
+</form>
+{% endblock %}

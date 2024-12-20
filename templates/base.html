@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Главная{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/logo.png') }}" type="image/x-icon">
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <div class="main">
+        <header>
+            <div>
+                <nav>
+                    <a href="/">Главная</a>
+                    <a href="/rest-api/medicines">Список лекарств</a>
+                    {% if session.get('role') == 'Фармацевт' %}
+                        <a href="/add_medicine">Добавить лекарство</a>
+                    {% endif %}
+                </nav>
+            </div>
+            {% if session.get('username') %}
+                <span>Добрый день, {{ session.get('username') }}</span>
+                <div class="auth-buttons">
+                    <a href="/rest-api/logout">Выйти</a>
+                </div>
+            {% else %}
+                <div class="auth-buttons">
+                    <a href="/rest-api/auth">Войти</a>
+                </div>
+            {% endif %}
+        </header>
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+        <footer>
+            &copy; Аптека "Аптека", 2024
+        </footer>
+    </div>
+</body>
+</html>

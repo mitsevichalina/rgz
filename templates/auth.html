@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Авторизация и Регистрация{% endblock %}
+
+{% block styles %}
+<style>
+    form {
+        width: 80%; /* Увеличим ширину формы */
+        max-width: 500px; /* Ограничим максимальную ширину */
+        margin: 20px auto; /* Добавим отступ сверху и снизу */
+        display: flex;
+        flex-direction: column;
+        padding: 30px; /* Увеличим внутренние отступы */
+        background-color: #fcf4f4; /* Светло-розовый фон */
+        border-radius: 15px; /* Скругленные углы */
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* Мягкая тень */
+    }
+
+    h1, h2 {
+        text-align: center;
+        color: #d4a0a0; /* Розовый цвет заголовков */
+        margin-bottom: 20px; /* Отступ снизу */
+    }
+
+    label {
+        margin-bottom: 8px; /* Увеличим отступ */
+        color: #4a4a4a; /* Темно-серый цвет текста */
+        font-weight: bold;
+        font-size: 18px; /* Увеличим размер текста */
+    }
+
+    input, button {
+        margin-bottom: 20px; /* Увеличим отступ */
+        padding: 12px; /* Увеличим внутренние отступы */
+        font-size: 16px;
+        border: 1px solid #dcdcdc; /* Светло-серый бордер */
+        border-radius: 8px; /* Скругленные углы */
+        background-color: #ffffff; /* Белый фон */
+        transition: border-color 0.3s ease; /* Плавное изменение цвета границы */
+    }
+
+    input:focus {
+        border-color: #d4a0a0; /* Розовый цвет при фокусе */
+        outline: none; /* Убираем стандартный outline */
+    }
+
+    button {
+        align-self: center; /* Выравниваем кнопку по центру */
+        background-color: #e0b0b0; /* Мягкий розовый */
+        color: #ffffff; /* Белый текст */
+        font-size: 18px; /* Увеличим размер текста */
+        padding: 12px 24px; /* Увеличим отступы */
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease; /* Плавное изменение цвета */
+    }
+
+    button:hover {
+        background-color: #d4a0a0; /* Темно-розовый при наведении */
+    }
+
+    .error {
+        color: #ff6b6b; /* Ярко-красный цвет ошибки */
+        font-style: italic;
+        font-weight: bold;
+        margin-bottom: 15px; /* Отступ снизу */
+        text-align: center; /* Выравниваем текст по центру */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Авторизация и Регистрация</h1>
+
+<!-- Форма входа -->
+<form action="/rest-api/auth" method="POST">
+    <h2>Войти</h2>
+    <label for="username">Логин:</label>
+    <input type="text" id="username" name="username" required>
+    <label for="password">Пароль:</label>
+    <input type="password" id="password" name="password" required>
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+    <button type="submit" name="login">Войти</button>
+</form>
+
+<!-- Форма регистрации -->
+<form action="/rest-api/auth" method="POST">
+    <h2>Зарегистрироваться</h2>
+    <label for="username">Логин:</label>
+    <input type="text" id="username" name="username" required>
+    <label for="password">Пароль:</label>
+    <input type="password" id="password" name="password" required>
+    {% if register_error %}
+    <div class="error">{{ register_error }}</div>
+    {% endif %}
+    <button type="submit" name="register">Зарегистрироваться</button>
+</form>
+{% endblock %}

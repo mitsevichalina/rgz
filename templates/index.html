@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная{% endblock %}
+
+{% block styles %}
+<style>
+    h1 {
+        font-size: 40px;
+        text-align: center;
+        color: #d4a0a0; /* Розовый цвет заголовка */
+    }
+    .welcome-button {
+        display: inline-block;
+        margin-top: 40px;
+        padding: 15px 30px;
+        font-size: 25px;
+        color: white;
+        background: linear-gradient(to right, #e0b0b0, #d4a0a0); /* Мягкий розовый градиент */
+        text-decoration: none;
+        border-radius: 5px;
+        text-align: center;
+        transition: background 0.3s ease;
+    }
+    .welcome-button:hover {
+        background: linear-gradient(to right, #d4a0a0, #e0b0b0); /* Обратный градиент при наведении */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="welcome-container">
+    <h1>Добро пожаловать в аптеку "Аптека"</h1>
+    <a href="/rest-api/medicines" class="welcome-button">Перейти к списку лекарств</a>
+</div>
+{% endblock %}
