@@ -1,11 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, current_app
 import os
+from os import path
 import psycopg2
-import psycopg2.extras
+from psycopg2.extras import RealDictCursor
 from werkzeug.security import check_password_hash, generate_password_hash
+import sqlite3
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'секретно-секретный-секрет')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'секретно-секретный секрет')
+app.config['DB_TYPE'] = os.getenv('DB_TYPE', 'postgres')
 
 # Генерация хешированного пароля для тестирования
 password = 'pharmacist'
@@ -19,13 +22,22 @@ def index():
     return render_template("index.html")
 
 def db_connect():
-    conn = psycopg2.connect(
-        host="127.0.0.1",
-        database="alina_mitsevich",
-        user="alina_mitsevich",
-        password="123"
-    )
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    if current_app.config['DB_TYPE'] == 'postgres':
+        conn = psycopg2.connect(
+            host="127.0.0.1",
+            database="alina_mitsevich",
+            user="alina_mitsevich",
+            password="123"
+        )
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+    else:
+        dir_path = path.dirname(path.realpath(__file__))
+        db_path = path.join(dir_path, "database.db")
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+
     return conn, cur
 
 @app.route('/rest-api/auth', methods=['GET', 'POST'])
