@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, current_app
 import os
 import psycopg2
 import psycopg2.extras
@@ -43,7 +43,10 @@ def auth():
 
             # Подключаемся к базе данных
             conn, cur = db_connect()
-            cur.execute("SELECT * FROM users WHERE username = %s", (username,))
+            if current_app.config['DB_TYPE'] == 'postgres':
+                cur.execute("SELECT * FROM users WHERE username = %s", (username,))
+            else:
+                cur.execute("SELECT * FROM users WHERE username = ?", (username,))
             user = cur.fetchone()
             cur.close()
             conn.close()
@@ -73,7 +76,11 @@ def auth():
 
             # Подключаемся к базе данных
             conn, cur = db_connect()
-            cur.execute("SELECT username FROM users WHERE username = %s", (username,))
+
+            if current_app.config['DB_TYPE'] == 'postgres':
+                cur.execute("SELECT username FROM users WHERE username = %s", (username,))
+            else:
+                cur.execute("SELECT username FROM users WHERE username = ?", (username,))
             if cur.fetchone():
                 cur.close()
                 conn.close()
@@ -81,7 +88,11 @@ def auth():
 
             # Хешируем пароль
             hashed_password = generate_password_hash(password)
-            cur.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, hashed_password))
+            if current_app.config['DB_TYPE'] == 'postgres':
+                cur.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, hashed_password))
+            else:
+                cur.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
+ 
             conn.commit()
             cur.close()
             conn.close()
@@ -130,17 +141,26 @@ def medicines_list():
     max_price = float(request.args.get("max_price", 999999))
 
     conn, cur = db_connect()
-
-    query = """
-        SELECT * FROM medicines
-        WHERE (LOWER(name) LIKE %s OR LOWER(generic_name) LIKE %s)
-        AND price BETWEEN %s AND %s
-    """
+    if current_app.config['DB_TYPE'] == 'postgres':
+        query = """
+            SELECT * FROM medicines
+            WHERE (LOWER(name) LIKE %s OR LOWER(generic_name) LIKE %s)
+            AND price BETWEEN %s AND %s
+        """
+    else:
+        query = """
+            SELECT * FROM medicines
+            WHERE (LOWER(name) LIKE ? OR LOWER(generic_name) LIKE ?)
+            AND price BETWEEN ? AND ?
+        """
     params = (f"%{search}%", f"%{search}%", min_price, max_price)
 
     if prescription_required != "all":
         prescription_required_bool = prescription_required == "true"
-        query += " AND prescription_required = %s"
+        if current_app.config['DB_TYPE'] == 'postgres':
+            query += " AND prescription_required = %s"
+        else:
+            query += " AND prescription_required = ?"
         params += (prescription_required_bool,)
 
     cur.execute(query, params)
@@ -178,10 +198,16 @@ def add_medicine():
         quantity = int(request.form["quantity"])
 
         conn, cur = db_connect()
-        cur.execute("""
-            INSERT INTO medicines (name, generic_name, prescription_required, price, quantity)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (name, generic_name, prescription_required, price, quantity))
+        if current_app.config['DB_TYPE'] == 'postgres':
+            cur.execute("""
+                INSERT INTO medicines (name, generic_name, prescription_required, price, quantity)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (name, generic_name, prescription_required, price, quantity))
+        else:
+            cur.execute("""
+                INSERT INTO medicines (name, generic_name, prescription_required, price, quantity)
+                VALUES (?, ?, ?, ?, ?)
+            """, (name, generic_name, prescription_required, price, quantity))
         conn.commit()
         cur.close()
         conn.close()
@@ -203,18 +229,27 @@ def edit_medicine(name):
         prescription_required = request.form.get("prescription_required") == "true"  # Преобразуем строку в булево значение
         price = float(request.form["price"])
         quantity = int(request.form["quantity"])
-
-        cur.execute("""
-            UPDATE medicines
-            SET generic_name = %s, prescription_required = %s, price = %s, quantity = %s
-            WHERE name = %s
-        """, (generic_name, prescription_required, price, quantity, name))
+        if current_app.config['DB_TYPE'] == 'postgres':
+            cur.execute("""
+                UPDATE medicines
+                SET generic_name = %s, prescription_required = %s, price = %s, quantity = %s
+                WHERE name = %s
+            """, (generic_name, prescription_required, price, quantity, name))
+        else:
+            cur.execute("""
+                UPDATE medicines
+                SET generic_name = ?, prescription_required = ?, price = ?, quantity = ?
+                WHERE name = ?
+            """, (generic_name, prescription_required, price, quantity, name))
         conn.commit()
         cur.close()
         conn.close()
         return redirect(url_for("medicines_list"))
 
-    cur.execute("SELECT * FROM medicines WHERE name = %s", (name,))
+    if current_app.config['DB_TYPE'] == 'postgres':
+        cur.execute("SELECT * FROM medicines WHERE name = %s", (name,))
+    else:
+        cur.execute("SELECT * FROM medicines WHERE name = ?", (name,))
     medicine = cur.fetchone()
     cur.close()
     conn.close()
@@ -229,7 +264,10 @@ def delete_medicine(name):
         return redirect(url_for("medicines_list"))
 
     conn, cur = db_connect()
-    cur.execute("DELETE FROM medicines WHERE name = %s", (name,))
+    if current_app.config['DB_TYPE'] == 'postgres':
+        cur.execute("DELETE FROM medicines WHERE name = %s", (name,))
+    else:
+        cur.execute("DELETE FROM medicines WHERE name = ?", (name,))
     conn.commit()
     cur.close()
     conn.close()
@@ -255,10 +293,16 @@ def api_medicines():
         price = data["price"]
         quantity = data["quantity"]
 
-        cur.execute("""
-            INSERT INTO medicines (name, generic_name, prescription_required, price, quantity)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (name, generic_name, prescription_required, price, quantity))
+        if current_app.config['DB_TYPE'] == 'postgres':
+            cur.execute("""
+                INSERT INTO medicines (name, generic_name, prescription_required, price, quantity)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (name, generic_name, prescription_required, price, quantity))
+        else:
+            cur.execute("""
+                INSERT INTO medicines (name, generic_name, prescription_required, price, quantity)
+                VALUES (?, ?, ?, ?, ?)
+            """, (name, generic_name, prescription_required, price, quantity))
         conn.commit()
         cur.close()
         conn.close()
@@ -269,7 +313,10 @@ def api_medicine(medicine_id):
     conn, cur = db_connect()
 
     if request.method == "GET":
-        cur.execute("SELECT * FROM medicines WHERE medicine_id = %s", (medicine_id,))
+        if current_app.config['DB_TYPE'] == 'postgres':
+            cur.execute("SELECT * FROM medicines WHERE medicine_id = %s", (medicine_id,))
+        else:
+            cur.execute("SELECT * FROM medicines WHERE medicine_id = ?", (medicine_id,))
         medicine = cur.fetchone()
         cur.close()
         conn.close()
@@ -285,18 +332,28 @@ def api_medicine(medicine_id):
         price = data["price"]
         quantity = data["quantity"]
 
-        cur.execute("""
-            UPDATE medicines
-            SET name = %s, generic_name = %s, prescription_required = %s, price = %s, quantity = %s
-            WHERE medicine_id = %s
-        """, (name, generic_name, prescription_required, price, quantity, medicine_id))
+        if current_app.config['DB_TYPE'] == 'postgres':
+            cur.execute("""
+                UPDATE medicines
+                SET name = %s, generic_name = %s, prescription_required = %s, price = %s, quantity = %s
+                WHERE medicine_id = %s
+            """, (name, generic_name, prescription_required, price, quantity, medicine_id))
+        else:
+            cur.execute("""
+                UPDATE medicines
+                SET name = ?, generic_name = ?, prescription_required = ?, price = ?, quantity = ?
+                WHERE medicine_id = ?
+            """, (name, generic_name, prescription_required, price, quantity, medicine_id))
         conn.commit()
         cur.close()
         conn.close()
         return jsonify({"message": "Medicine updated successfully"})
 
     elif request.method == "DELETE":
-        cur.execute("DELETE FROM medicines WHERE medicine_id = %s", (medicine_id,))
+        if current_app.config['DB_TYPE'] == 'postgres':
+            cur.execute("DELETE FROM medicines WHERE medicine_id = %s", (medicine_id,))
+        else:
+            cur.execute("DELETE FROM medicines WHERE medicine_id = ?", (medicine_id,))
         conn.commit()
         cur.close()
         conn.close()
