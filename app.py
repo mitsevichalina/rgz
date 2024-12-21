@@ -10,11 +10,6 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'секретно-секретный секрет')
 app.config['DB_TYPE'] = os.getenv('DB_TYPE', 'postgres')
 
-# Генерация хешированного пароля для тестирования
-password = 'pharmacist'
-hashed_password = generate_password_hash(password, method='scrypt')
-print(f"Хешированный пароль для 'pharmacist': {hashed_password}")
-
 # Главная страница
 @app.route("/")
 @app.route("/rest-api/index")
